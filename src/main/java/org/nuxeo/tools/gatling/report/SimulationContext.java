@@ -37,6 +37,8 @@ public class SimulationContext {
 
     protected final Map<String, CountMax> users = new HashMap<>();
 
+    protected String id;
+
     protected String simulationName;
 
     protected String scenarioName;
@@ -60,6 +62,14 @@ public class SimulationContext {
     public void setSimulationName(String name) {
         this.simulationName = name;
         simStat.setSimulationName(name);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public RequestStat getSimStat() {

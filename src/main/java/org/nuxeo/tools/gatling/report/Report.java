@@ -29,17 +29,26 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.nuxeo.tools.gatling.report.CombinedContext.CombinedPart;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
-public class Report {
+public class Report implements AutoCloseable {
     protected static final String YAML = "yaml/";
 
     protected static final String HTML = "html/";
 
     protected static final String DEFAULT_FILENAME = "index.html";
+
+    protected static final String COMBINED_HEAD_TEMPLATE = "combined-head.mustache";
+
+    protected static final String COMBINED_SIMULATION_TEMPLATE = "combined-simulation.mustache";
+
+    protected static final String COMBINED_TREND_TEMPLATE = "combined-trend.mustache";
+
+    protected static final String COMBINED_DIFF_TEMPLATE = "combined-diff.mustache";
 
     protected static final String SIMULATION_TEMPLATE = "simulation.mustache";
 
@@ -71,6 +80,8 @@ public class Report {
 
     protected boolean yaml = false;
 
+    protected boolean combined = false;
+
     protected List<String> map;
 
     protected String filename = DEFAULT_FILENAME;
@@ -94,6 +105,11 @@ public class Report {
         return this;
     }
 
+    public Report combined(boolean combined) {
+        this.combined = combined;
+        return this;
+    }
+
     public Report setTemplate(String template) {
         this.template = template;
         return this;
@@ -105,22 +121,26 @@ public class Report {
             stats.forEach(stats -> stats.simStat.graphite = new Graphite(graphiteUrl, user, password, stats,
                     outputDirectory, zoneId));
         }
-        switch (nbSimulation) {
-        case 1:
-            createSimulationReport();
-            break;
-        case 2:
-            createDiffReport();
-            break;
-        default:
-            createTrendReport();
+        if (combined) {
+            createCombinedReport();
+        } else {
+            switch (nbSimulation) {
+            case 1:
+                createSimulationReport();
+                break;
+            case 2:
+                createDiffReport();
+                break;
+            default:
+                createTrendReport();
+            }
         }
         return getReportPath().getAbsolutePath();
     }
 
     public void createSimulationReport() throws IOException {
         Mustache mustache = getMustache();
-        mustache.execute(getWriter(), stats.get(0).setScripts(getScripts())).flush();
+        mustache.execute(getWriter(), stats.get(0).setScripts(getScripts()));
     }
 
     protected Mustache getMustache() throws FileNotFoundException {
@@ -129,9 +149,39 @@ public class Report {
         if (template == null) {
             mustache = mf.compile(getDefaultTemplate());
         } else {
-            mustache = mf.compile(new FileReader(new File(template)), template);
+            mustache = mf.compile(new FileReader(template), template);
         }
         return mustache;
+    }
+
+    public void createCombinedReport() throws IOException {
+        MustacheFactory mf = new DefaultMustacheFactory();
+
+        CombinedContext context = new CombinedContext(stats, getScripts());
+
+        Mustache tplHead = mf.compile(getTemplatePath(COMBINED_HEAD_TEMPLATE));
+        Mustache tplSimulation = mf.compile(getTemplatePath(COMBINED_SIMULATION_TEMPLATE));
+        Mustache tplDiff = mf.compile(getTemplatePath(COMBINED_DIFF_TEMPLATE));
+        Mustache tplTrend = mf.compile(getTemplatePath(COMBINED_TREND_TEMPLATE));
+
+        tplHead.execute(getWriter(), context);
+        for (CombinedPart part : context.getParts()) {
+            Mustache tpl;
+            switch (part.getType()) {
+                case SIMULATION:
+                    tpl = tplSimulation;
+                    break;
+                case DIFF:
+                    tpl = tplDiff;
+                    break;
+                case TREND:
+                    tpl = tplTrend;
+                    break;
+                default:
+                    throw new IllegalStateException();
+            }
+            tpl.execute(getWriter(), part.getContext());
+        }
     }
 
     public void createTrendReport() throws IOException {
@@ -143,9 +193,9 @@ public class Report {
             for (String name : map) {
                 scopes.put(name, stats.get(i++));
             }
-            mustache.execute(getWriter(), scopes).flush();
+            mustache.execute(getWriter(), scopes);
         } else {
-            mustache.execute(getWriter(), new TrendContext(stats).setScripts(getScripts())).flush();
+            mustache.execute(getWriter(), new TrendContext(stats).setScripts(getScripts()));
         }
     }
 
@@ -158,9 +208,9 @@ public class Report {
             for (String name : map) {
                 scopes.put(name, stats.get(i++));
             }
-            mustache.execute(getWriter(), scopes).flush();
+            mustache.execute(getWriter(), scopes);
         } else {
-            mustache.execute(getWriter(), new DiffContext(stats).setScripts(getScripts())).flush();
+            mustache.execute(getWriter(), new DiffContext(stats).setScripts(getScripts()));
         }
 
     }
@@ -202,6 +252,11 @@ public class Report {
         return DEFAULT_SCRIPT;
     }
 
+    public String getTemplatePath(String tpl) {
+        String prefix = yaml ? YAML : HTML;
+        return prefix + tpl;
+    }
+
     public String getDefaultTemplate() {
         int nbSimulation = stats.size();
         String prefix = yaml ? YAML : HTML;
@@ -238,5 +293,13 @@ public class Report {
             this.filename = filename;
         }
         return this;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (writer != null) {
+            writer.close();
+            writer = null;
+        }
     }
 }

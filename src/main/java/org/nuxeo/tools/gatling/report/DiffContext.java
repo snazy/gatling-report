@@ -28,6 +28,8 @@ public class DiffContext {
 
     protected final long max;
 
+    protected String id;
+
     protected List<String> scripts;
 
     public DiffContext(List<SimulationContext> stats) {
@@ -39,6 +41,14 @@ public class DiffContext {
     public DiffContext setScripts(List<String> scripts) {
         this.scripts = scripts;
         return this;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public List<DiffRequestStat> getDiffRequests() {

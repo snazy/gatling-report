@@ -1,0 +1,124 @@
+<div class="simDiv">
+<a name="sim-{{id}}"/>
+<h2>{{simStat.startDate}} - Gatling report for simulation {{simStat.simulation}}</h2>
+
+<div id="summaryDiv{{id}}" class="summaryDiv">
+  <table id="summaryTab{{id}}" class="summaryTab">
+    <tr>
+      <th>Simulation</th>
+      <td>{{simStat.scenario}}</td>
+    </tr>
+    <tr>
+      <th>Launched</th>
+      <td>{{simStat.startDate}}</td>
+    </tr>
+    <tr>
+      <th>Duration (s)</th>
+      <td>{{simStat.getDuration}}</td>
+    </tr>
+    <tr>
+      <th>Throughput requests/s</th>
+      <td>{{simStat.throughput}}</td>
+    </tr>
+    <tr>
+      <th>Max concurrent users</th>
+      <td>{{simStat.maxUsers}}</td>
+    </tr>
+  </table>
+</div>
+
+<div class="responseAllDiv" id="responseAllDiv{{id}}"></div>
+<div class="countDiv" id="countDiv{{id}}"></div>
+<div class="responseDiv" id="responseDiv{{id}}"></div>
+<div class="monitoring" id="monitoring{{id}}">
+  {{#simStat.graphite.images}}
+    <a class="image" href="{{url}}" title="{{title}}"><img src="{{filename}}" alt="{{title}}"/></a>
+  {{/simStat.graphite.images}}
+</div>
+<script>
+var dataCount{{id}} = [{
+  values: [{{simStat.successCount}}, {{simStat.errorCount}}],
+  labels: ['Success: {{simStat.successCount}}', 'Error: {{simStat.errorCount}}'],
+  type: 'pie',
+  marker: {
+    //colors: ['rgb(56,75,126)', 'rgb(255,67,67)']
+  }
+}];
+var layoutCount{{id}} = {
+  height: 300,
+  width: 400,
+  title: 'Requests count',
+};
+Plotly.newPlot('countDiv{{id}}', dataCount{{id}}, layoutCount{{id}});
+
+var dataAll{{id}} = [
+  {
+    y: {{simStat.durations}},
+    name: 'Average: {{simStat.average}}ms',
+    boxpoints: {{{simStat.boxpoints}}},
+    jitter: 0.3,
+    pointpos: -1.8,
+    boxmean: 'sd',
+    type: 'box',
+    marker:{
+      size:2,
+      opacity:0.6
+    }
+  }
+];
+var layoutAll{{id}} = {
+  height: 500,
+  width: 500,
+  yaxis: {
+    title: 'Time ms',
+    type: 'log'
+  },
+  showlegend: true,
+  xaxis: {
+      showticklabels: false
+  },
+  title: 'Response time all requests'
+};
+Plotly.newPlot('responseAllDiv{{id}}', dataAll{{id}}, layoutAll{{id}});
+
+var layoutResponse{{id}} = {
+  height: 600,
+  width: 1200,
+  yaxis: {
+    title: 'Time ms',
+    type: 'log',
+    zeroline: true
+  },
+  xaxis: {
+    showticklabels: false
+  },
+  title: 'Response time per request',
+  showlegend: true,
+  legend: {
+    traceorder: 'reversed'
+  }
+};
+
+var dataResponse{{id}} = [];
+{{#requests}}
+var data{{id}}_{{indice}} = {
+    y: {{durations}},
+    boxpoints: {{{boxpoints}}},
+    jitter: 0.2,
+    pointpos: -5,
+    fillcolor: 'cls',
+    name: '{{request}} ({{average}}ms)',
+    boxmean: 'sd',
+    type: 'box',
+    marker:{
+       size: 3,
+       opacity:0.7
+    }
+
+  };
+dataResponse{{id}}.push(data{{id}}_{{indice}});
+{{/requests}}
+Plotly.newPlot('responseDiv{{id}}', dataResponse{{id}}, layoutResponse{{id}});
+
+</script>
+</div>

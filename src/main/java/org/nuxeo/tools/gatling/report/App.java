@@ -78,13 +78,13 @@ public class App implements Runnable {
         } else {
             try {
                 renderAsReport();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Can not generate report", e);
             }
         }
     }
 
-    protected void renderAsReport() throws IOException {
+    protected void renderAsReport() throws Exception {
         File dir = new File(options.outputDirectory);
         if (!dir.mkdirs()) {
             if (!options.force) {
@@ -93,7 +93,7 @@ public class App implements Runnable {
             }
             log.warn("Overriding existing report directory" + options.outputDirectory);
         }
-        String reportPath = new Report(stats).setOutputDirectory(dir)
+        try (Report report = new Report(stats).setOutputDirectory(dir)
                                              .includeJs(options.includeJs)
                                              .setTemplate(options.template)
                                              .includeGraphite(options.graphiteUrl, options.user, options.password,
@@ -101,8 +101,10 @@ public class App implements Runnable {
                                              .yamlReport(options.yaml)
                                              .withMap(options.map)
                                              .setFilename(options.outputName)
-                                             .create();
-        log.info("Report generated: " + reportPath);
+                                             .combined(options.combined)) {
+            String reportPath = report.create();
+            log.info("Report generated: " + reportPath);
+        }
     }
 
     protected void renderAsCsv() {

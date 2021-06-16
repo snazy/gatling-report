@@ -31,6 +31,8 @@ public class TrendContext {
 
     protected final List<TrendStat> requests = new ArrayList<>();
 
+    protected String id;
+
     protected List<String> scripts;
 
     public TrendContext(List<SimulationContext> stats) {
@@ -57,6 +59,14 @@ public class TrendContext {
     public TrendContext setScripts(List<String> scripts) {
         this.scripts = scripts;
         return this;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     protected List<String> getRequestListSorted(SimulationContext stat) {

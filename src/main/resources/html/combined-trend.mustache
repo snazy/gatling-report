@@ -1,0 +1,77 @@
+<div class="simDiv">
+<a name="sim-{{id}}"/>
+<h1>{{scenario}} Trend report</h1>
+
+<div id="totalDiv" class="totalDiv"></div>
+{{#requests}}
+  <div id="div{{id}}_{{indice}}"></div>
+{{/requests}}
+
+<script>
+
+var data{{id}} = [{
+  type: 'scatter',
+  mode: 'lines',
+  x: {{{all.xvalues}}},
+  y: [],
+  line: {
+    width: 2
+  },
+  error_y: {
+    array: [],
+    thickness: 0.5,
+    width: 0
+  },
+  name: 'Response time'
+  },
+  {
+    type: 'scatter',
+    mode: 'lines',
+    x: {{{all.xvalues}}},
+    y: [],
+    yaxis: 'y2',
+    name: 'Requests/s'
+  }
+];
+
+var layout{{id}} = {
+  title: "",
+  xaxis: {
+    title: "Date"
+  },
+  yaxis: {
+    title: "Time in ms",
+    rangemode: "nonnegative"
+  },
+  yaxis2: {
+    title: 'Requests per second',
+    overlaying: 'y',
+    side: 'right',
+    rangemode:"tozero"
+  }
+};
+
+var layoutAll{{id}} = clone(layout{{id}});
+layoutAll{{id}}["title"] = "{{scenario}} - Response time (avg + stddev)";
+var dataAll{{id}} = clone(data{{id}});
+dataAll{{id}}[0]["y"] = {{{all.yvalues}}};
+dataAll{{id}}[0]["error_y"]["array"] = {{{all.yerrors}}};
+dataAll{{id}}[1]["y"] = {{{all.rps}}};
+
+Plotly.plot('totalDiv', dataAll{{id}}, layoutAll{{id}}, {showLink: false});
+
+{{#requests}}
+var layout{{id}}_{{indice}} = clone(layout{{id}});
+layout{{id}}_{{indice}}["title"] = "{{name}} - Response time (avg + stddev)";
+var data{{id}}_{{indice}} = clone(data{{id}});
+data{{id}}_{{indice}}[0]["y"] = {{{yvalues}}};
+data{{id}}_{{indice}}[0]["error_y"]["array"] = {{{yerrors}}};
+data{{id}}_{{indice}}[1]["y"] = {{{rps}}};
+Plotly.plot('div{{id}}_{{indice}}', data{{id}}_{{indice}}, layout{{id}}_{{indice}}, {showLink: false});
+
+{{/requests}}
+
+
+</script>
+
+</div>

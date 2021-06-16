@@ -48,6 +48,9 @@ public class Options {
     @Parameter(names = { "--template", "-t" }, description = "Use a custom mustache template to generate the report.")
     public String template;
 
+    @Parameter(names = { "--combined", "-c" }, description = "Combined single report for multiple simulation logs.")
+    public boolean combined = false;
+
     @Parameter(names = { "--map",
             "-m" }, description = "When using a custom template each simulation stat are accessible using its name.")
     public List<String> map = new ArrayList<>();
