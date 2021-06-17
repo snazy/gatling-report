@@ -44,8 +44,8 @@ public class App implements Runnable {
         }
     }
 
-    public static void main(String args[]) {
-        (new Thread(new App(args))).start();
+    public static void main(String[] args) {
+        new App(args).run();
     }
 
     @Override
